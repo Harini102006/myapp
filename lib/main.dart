@@ -118,7 +118,7 @@ class BluetoothControllerPage extends StatelessWidget {
               height: 100,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.cyan,
+                color: Colors.pinkAccent,
               ),
               child: IconButton(
                   onPressed: () {}, icon: const Icon(Icons.bluetooth)),
@@ -128,7 +128,7 @@ class BluetoothControllerPage extends StatelessWidget {
               height: 100,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.cyan,
+                color: Colors.deepPurple,
               ),
               child: IconButton(
                   onPressed: () {}, icon: const Icon(Icons.bluetooth)),
