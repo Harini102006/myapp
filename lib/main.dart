@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/routes/listDevices.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 
 void main() {
   runApp(const BluetoothControllerApp());
@@ -14,6 +16,22 @@ class BluetoothControllerApp extends StatefulWidget {
 }
 
 class _BluetoothControllerAppState extends State<BluetoothControllerApp> {
+  @override
+  void initState() {
+    super.initState();
+    _requestBluetoothPermissions();
+  }
+
+  Future<void> _requestBluetoothPermissions() async {
+    if (await Permission.bluetoothScan.request().isGranted &&
+        await Permission.bluetoothConnect.request().isGranted &&
+        await Permission.bluetoothAdvertise.request().isGranted) {
+      // Bluetooth permissions granted, proceed with your app logic
+    } else {
+      // Handle the case when permissions are denied
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -119,10 +137,37 @@ class BluetoothControllerPage extends StatelessWidget {
         ),
       ]),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
+        onPressed: () async {
+          bool? bluetoothCheck = await _requestEnableBluetooth();
           // Add your Bluetooth controller logic here
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const ListDevicesPage()));
+          if (bluetoothCheck == true) {
+            Navigator.push(
+                // ignore: use_build_context_synchronously
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ListDevicesPage()));
+          } else {
+            final snackBar = SnackBar(
+              content: const Text(
+                'Custom SnackBar',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.blueAccent,
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: 'Dismiss',
+                textColor: Colors.yellow,
+                onPressed: () {
+                  // Code to execute when action is pressed
+                },
+              ),
+            );
+
+            // Show the custom SnackBar
+            // ignore: use_build_context_synchronously
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          }
         },
         tooltip: 'Connect to Bluetooth',
         backgroundColor: Colors.cyan,
@@ -130,4 +175,10 @@ class BluetoothControllerPage extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<bool?> _requestEnableBluetooth() async {
+  // Request to enable Bluetooth
+  bool? enableBluetooth = await FlutterBluetoothSerial.instance.requestEnable();
+  return enableBluetooth;
 }
