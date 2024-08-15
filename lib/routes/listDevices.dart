@@ -1,91 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:all_bluetooth/all_bluetooth.dart';
+import 'package:flutter_blue/flutter_blue.dart';
 
 class ListDevicesPage extends StatefulWidget {
-  const ListDevicesPage({Key? key}) : super(key: key);
+  const ListDevicesPage({super.key});
 
   @override
   State<ListDevicesPage> createState() => _ListDevicesPageState();
 }
 
 class _ListDevicesPageState extends State<ListDevicesPage> {
-  final AllBluetooth bluetooth = AllBluetooth();
-  List<BluetoothDevice> devicesList = [];
-
-  // SnackBar for general notifications
-  SnackBar _buildSnackBar(String message,
-      {Color backgroundColor = Colors.blueAccent}) {
-    return SnackBar(
-      content: Text(
-        message,
-        style: const TextStyle(color: Colors.white),
-      ),
-      backgroundColor: backgroundColor,
-      duration: const Duration(seconds: 3),
-      behavior: SnackBarBehavior.floating,
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    startScan();
-  }
-
-  @override
-  void dispose() {
-    bluetooth.stopDiscovery(); // Stop discovery when leaving the page
-    super.dispose();
-  }
+  FlutterBlue flutterBlue = FlutterBlue.instance;
+  bool scanning = false;
+  String deviceName = "";
 
   void startScan() {
-    // Listen for device discoveries
-    bluetooth.discoverDevices.listen((device) {
-      if (!devicesList.contains(device)) {
+    flutterBlue.startScan(
+        scanMode: ScanMode.lowLatency, timeout: const Duration(seconds: 4));
+    flutterBlue.scanResults.listen((devices) {
+      for (ScanResult r in devices) {
         setState(() {
-          devicesList.add(device);
-          ScaffoldMessenger.of(context).showSnackBar(
-            _buildSnackBar(
-                'Device Found: ${device.name.isEmpty ? '(Unknown Device)' : device.name}'),
-          );
+          deviceName = r.device.name.toString();
         });
       }
-    }).onError((error) {
-      // Show error message in SnackBar
-      ScaffoldMessenger.of(context).showSnackBar(
-        _buildSnackBar('Error discovering devices: ${error.toString()}',
-            backgroundColor: Colors.red),
-      );
     });
-
-    // Start discovery process
-    bluetooth.startDiscovery();
   }
+
+  void stopScan() {}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('List of Devices'),
-      ),
-      body: devicesList.isEmpty
-          ? const Center(
-              child: Text(
-                'No devices found',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            )
-          : ListView.builder(
-              itemCount: devicesList.length,
-              itemBuilder: (context, index) {
-                BluetoothDevice device = devicesList[index];
-                return ListTile(
-                  title: Text(
-                      device.name.isEmpty ? '(Unknown Device)' : device.name),
-                  subtitle: Text(device.address.toString()),
-                );
+        title: const Text("Devices"),
+        actions: [
+          IconButton(
+              onPressed: () {
+                if (scanning == false) {
+                  startScan();
+                  setState(() {
+                    scanning = true;
+                  });
+                } else {
+                  stopScan();
+                  setState(() {
+                    scanning = false;
+                  });
+                }
               },
-            ),
+              icon: const Icon(Icons.refresh))
+        ],
+      ),
+      body: Center(
+        child: Text(deviceName),
+      ),
     );
   }
 }
